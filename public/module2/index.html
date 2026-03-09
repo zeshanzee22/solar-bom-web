@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Solar CAD SaaS v5.3 (Real-Time)</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <script src="database.js"></script>
+    <script src="units.js"></script>
+    <script src="measuredim.js"></script>
+
+    <script>
+        const PPI = (typeof GLOBAL_CONFIG !== 'undefined') ? GLOBAL_CONFIG.PPI : (10/12);
+
+        function generateSolarArray(autoZoom = false) {
+            // STOP THE LOOP: Don't redraw if we are just clicking to select an object
+            if (window.isSelecting) return; 
+
+            const typeEl = document.getElementById('struct-type');
+            if(!typeEl) return;
+            const type = typeEl.value;
+            
+            if(type === 'elevated' && typeof generateElevated === 'function') generateElevated();
+            else if (typeof generateGroundMount === 'function') generateGroundMount();
+            
+            if(autoZoom && typeof zoomToFit === 'function') setTimeout(zoomToFit, 50);
+
+            if (typeof window.updateStatsBox === 'function') window.updateStatsBox();
+        }
+
+        function toggleStructureUI(shouldRedraw = true) {
+            const type = document.getElementById('struct-type').value;
+            document.getElementById('ui-elevated').style.display = type === 'elevated' ? 'block' : 'none';
+            document.getElementById('ui-ground').style.display = type === 'ground' ? 'block' : 'none';
+            
+            // Fix the Flash: Only redraw if requested, and never auto-zoom on UI toggle.
+            if (shouldRedraw) generateSolarArray(false); 
+        }
+
+        function initPanelDropdown() {
+            const sel = document.getElementById('panel-model');
+            sel.innerHTML = '<option value="custom">Custom</option>';
+            if (typeof getPanelOptions === 'function') {
+                getPanelOptions().forEach(opt => {
+                    const el = document.createElement('option');
+                    el.value = opt.value; el.innerText = opt.label;
+                    sel.appendChild(el);
+                });
+            }
+        }
+
+        function loadPanelDims() {
+            const val = document.getElementById('panel-model').value;
+            const customWattRow = document.getElementById('custom-wattage-row');
+            
+            if (val === 'custom') {
+                customWattRow.style.display = 'flex'; 
+            } else if (typeof PANEL_DB !== 'undefined' && PANEL_DB[val]) {
+                customWattRow.style.display = 'none'; 
+                
+                const unit = document.getElementById('panel-unit').value || 'in';
+                const l_mm = PANEL_DB[val].l;
+                const w_mm = PANEL_DB[val].w;
+                
+                document.getElementById('p-len').value = Units.formatVal(Units.mmToTarget(l_mm, unit));
+                document.getElementById('p-wid').value = Units.formatVal(Units.mmToTarget(w_mm, unit));
+                
+                // Fix the Flash: Tell it FALSE so changing panel models doesn't jump the screen!
+                generateSolarArray(false); 
+            }
+        }
+
+        // Triggered when user changes the Panel Unit Dropdown
+        function convertPanelInputs() {
+            loadPanelDims(); // Reloads the preset panel with the new unit
+        }
+
+        window.onload = function() {
+            initPanelDropdown();
+            loadPanelDims(); // <--- ADD THIS LINE so it draws on startup!
+            const inputs = document.querySelectorAll('#solar-sidebar input, #solar-sidebar select');
+            inputs.forEach(input => {
+                input.addEventListener('input', (e) => {
+                    generateSolarArray(false); 
+                    if (e.target.id === 'azimuth') updateCompass(e.target.value);
+                });
+                input.addEventListener('change', (e) => {
+                     if(input.name === 'orient' && typeof updateMountTypeOptions === 'function') updateMountTypeOptions();
+                     generateSolarArray(false);
+                     if (e.target.id === 'azimuth') updateCompass(e.target.value);
+                });
+            });
+        };
+
+        function updateCompass(deg) {
+            const needle = document.getElementById('compass-needle');
+            const label = document.getElementById('compass-label');
+            if(needle && label) {
+                needle.style.transform = `rotate(${deg}deg)`; // Only rotates the needle now!
+                
+                let text = "S";
+                const numDeg = parseFloat(deg);
+                if (numDeg < 180) text = "SE";
+                if (numDeg > 180) text = "SW";
+                if (numDeg === 180) text = "S";
+                
+                label.innerText = `${text} ${deg}°`;
+            }
+        }
+    </script>
+
+   <div id="toolbar">
+        <button class="tool-btn active" id="btn-select" onclick="setTool('select')">Select (s)</button>
+        <button class="tool-btn" id="btn-line" onclick="setTool('line')">Line (l)</button>
+        <button class="tool-btn" id="btn-obs" onclick="setTool('obs')">Object (o)</button>
+        <button class="tool-btn" id="btn-rect" onclick="openParam('rect')">Rectangle (r)</button>
+        <button class="tool-btn" id="btn-circle" onclick="openParam('circle')">Circle (c)</button>
+        
+        <button class="tool-btn" id="btn-measure" onclick="setTool('measure')">Measure (m)</button>
+
+        <hr style="width: 80%; border: 1px solid #444; margin: 10px 0;">
+        <button class="tool-btn" onclick="zoomToFit()" style="font-size:12px;">Zoom Fit</button>
+        <button class="tool-btn" onclick="spawnNewStructure()" style="font-size:11px; background:#28a745; color:white;">Add New Layout</button>
+        <button class="tool-btn" id="btn-lock" onclick="toggleLayoutLock()" style="font-size:12px;">Lock Layout 🔒</button>
+
+        <div class="dim-toggles">
+            <label><input type="checkbox" checked onchange="toggleLayoutDims()"> Layout Dims</label>
+            <label><input type="checkbox" checked onchange="togglePanelDims()"> Panel Dims</label>
+            <label><input type="checkbox" checked onchange="togglePlacementDims()"> Placement Dims</label>
+        </div>
+    </div>
+
+<div id="rect-panel" class="param-panel">
+        <strong>Rectangle</strong>
+        <label>Width (ft): <input type="number" id="rw" value="4"></label>
+        <label>Height (ft): <input type="number" id="rh" value="4"></label>
+        <button onclick="commitParamShape('rect')">Place Shape</button>
+    </div>
+    <div id="circle-panel" class="param-panel">
+        <strong>Circle</strong>
+        <label>Dia (ft): <input type="number" id="cd" value="4"></label>
+        <button onclick="commitParamShape('circle')">Place Shape</button>
+    </div>
+
+    <div id="hud-input">0'</div>
+
+    <div id="stats-panel">
+        <div class="stat-row"><span>Panel Wattage:</span> <span id="stat-watt">0 W</span></div>
+        <div class="stat-row"><span>Panel Qty:</span> <span id="stat-qty">0</span></div>
+        <div class="stat-row"><span>Total Capacity:</span> <span id="stat-cap">0.00 kW</span></div>
+        <div class="stat-row"><span>Fix Structures:</span> <span id="stat-fix">0</span></div>
+        <div class="stat-row"><span>Elevated Structures:</span> <span id="stat-elev">0</span></div>
+    </div>
+
+
+    <div id="canvas-container"><canvas id="c"></canvas></div>
+    
+    <div id="compass-container" style="position: absolute; top: 5px; right: 360px; width: 80px; height: 80px; text-align: center; z-index: 100;">
+        <svg viewBox="0 0 100 100" style="position:absolute; top:0; left:0; width:100%; height:100%;">
+            <circle cx="50" cy="50" r="45" fill="white" stroke="#333" stroke-width="1.5"/>
+            <text x="50" y="17" font-family="Arial" font-weight="bold" text-anchor="middle" font-size="14">N</text>
+            <text x="50" y="93" font-family="Arial" font-weight="bold" text-anchor="middle" font-size="14">S</text>
+            <text x="86" y="55" font-family="Arial" font-weight="bold" text-anchor="middle" font-size="14">E</text>
+            <text x="14" y="55" font-family="Arial" font-weight="bold" text-anchor="middle" font-size="14">W</text>
+        </svg>
+        <img id="compass-needle" src="data:image/svg+xml;utf8,%3Csvg%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpolygon%20points%3D%2250%2C20%2055%2C50%2045%2C50%22%20fill%3D%22red%22%2F%3E%3Cpolygon%20points%3D%2250%2C80%2055%2C50%2045%2C50%22%20fill%3D%22black%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%223%22%20fill%3D%22%23333%22%2F%3E%3C%2Fsvg%3E" style="position:absolute; top:0; left:0; width:100%; height:100%; transition: transform 0.3s;">
+        <div id="compass-label" style="position:absolute; bottom:-25px; width:100%; font-weight:bold; color:#ffff; font-size: 14px;">S 180°</div>
+    </div>
+
+    <div id="solar-sidebar">
+        <h3>Solar Structure Configuration</h3>
+        
+        <span class="section-title">Structure Type</span>
+        <select id="struct-type" onchange="toggleStructureUI()">
+            <option value="elevated">Elevated Structure</option>
+            <option value="ground">Fix Structure</option>
+        </select>
+        
+        <span class="section-title">Global Layout Unit</span>
+        <select id="layout-unit" onchange="generateSolarArray(false)">
+            <option value="ft-dec" selected>Feet (Decimal)</option>
+            <option value="ft-in">Feet & Inches</option>
+            <option value="in">Inches</option>
+            <option value="m">Meters</option>
+            <option value="cm">Centimeters</option>
+            <option value="mm">Millimeters</option>
+        </select>
+
+        <span class="section-title">Solar Panel Info</span>
+        <select id="panel-model" onchange="loadPanelDims()">
+            </select>
+        <div class="form-row" id="custom-wattage-row" style="display:none;">
+            <label>Custom Wattage:</label>
+            <input type="number" id="custom-watt" placeholder="e.g. 540">
+        </div>
+        <div class="form-row">
+            <select id="panel-unit" onchange="convertPanelInputs()">
+                <option value="in" selected>Inches</option>
+                <option value="mm">Millimeters</option>
+                <option value="cm">Centimeters</option>
+                <option value="m">Meters</option>
+                <option value="ft">Feet (Decimal)</option>
+            </select>
+            <input type="number" id="p-len" placeholder="Length" value="89.69">
+            <input type="number" id="p-wid" placeholder="Width" value="44.65">
+        </div>
+
+        <span class="section-title">Orientation</span>
+        <div class="radio-group">
+            <label><input type="radio" name="orient" value="portrait"> Portrait</label>
+            <label><input type="radio" name="orient" value="landscape" checked> Landscape</label>
+        </div>
+
+        <div id="ui-elevated">
+            <span class="section-title">Solar Panel Array</span>
+            <div class="form-row"><label>Columns (N-S):</label><input type="number" id="arr-rows" value="5"></div>
+            <div class="form-row"><label>Rows (E-W):</label><input type="number" id="arr-cols" value="9"></div>
+            <span class="section-title">Solar Panel to Panel Gap (Inches)</span>
+            <div class="form-row"><label>N-S:</label><input type="number" id="gap-ns" value="1.5"></div>
+            <div class="form-row"><label>E-W:</label><input type="number" id="gap-ew" value="1.5"></div>
+            
+            <span class="section-title">Walkway Configuration</span>
+            <div class="walkway-manager">
+                <div id="walkway-list-container" class="walkway-list"></div>
+                <div style="display:flex; justify-content:space-between;">
+                    <button class="walkway-add-btn" onclick="addWalkwayUI('horizontal')">+ Horizontal</button>
+                    <button class="walkway-add-btn" onclick="addWalkwayUI('vertical')">+ Vertical</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="ui-ground" style="display:none;">
+            <span class="section-title">Row Configuration (N-S)</span>
+            <div class="walkway-manager">
+                <div id="gm-row-list-container" class="walkway-list">
+                    </div>
+                <button class="walkway-add-btn" style="width:100%; margin-top:5px;" onclick="addGMRow()">+ Add Row</button>
+            </div>
+            
+            <div class="form-row"><label>Tilt Angle (°):</label><input type="number" id="tilt-angle" value="20"></div>
+            <div class="form-row"><label>Columns (E-W):</label><input type="number" id="gm-cols" value="4"></div>
+            <div class="form-row"><label>Frame to Frame Gap E-W (in):</label><input type="number" id="gm-gap-ew" value="0.25"></div>
+            <div class="form-row"><label>Gaping Factor:</label><input type="number" id="row-factor" value="1.5" step="0.1"></div>
+        </div>
+
+        <hr style="border-color:#444;">
+        <div class="form-row"><label>Azimuth Angle:</label><input type="number" id="azimuth" value="180"></div>
+        
+        <hr style="border-color:#444;">
+        <span class="section-title">Project Details (For Export)</span>
+        <div class="form-row"><input type="text" id="cust-name" placeholder="Customer Name"></div>
+        <div class="form-row"><input type="text" id="cust-loc" placeholder="Location"></div>
+        <div class="form-row"><input type="text" id="cust-company" placeholder="Company Name (e.g. XYZ Solar)"></div>
+        
+        <div class="form-row">
+            <label style="width: 100%; font-size: 12px; margin-bottom: 4px;">Export Quality (Resolution):</label>
+            <select id="export-quality" style="width: 100%; margin-bottom: 10px;">
+                <option value="1">1x (Fast Draft)</option>
+                <option value="3" selected>3x (Standard)</option>
+                <option value="5">5x (High - Large Layouts)</option>
+                <option value="8">8x (Ultra HD)</option>
+                <option value="10">10x (Extreme - Slower Export)</option>
+            </select>
+        </div>
+
+
+
+
+        <button class="action-btn" style="background:#28a745;" onclick="exportToPDF()">Export to PDF 📄</button>
+
+        <button class="action-btn" onclick="generateSolarArray(true)">Refresh Layout</button>
+        <button id="btn-del-mode" class="action-btn" style="background:#dc3545; margin-top:5px;" onclick="toggleDeleteMode()">
+            Delete Panel Mode: OFF
+        </button>
+    </div>
+
+    <script src="drawing.js"></script>
+    <script src="dimline.js"></script>
+    <script src="elevateddraw.js"></script>
+    <script src="fixdraw.js"></script>
+    <script src="walkway.js"></script>
+    <script src="exportlayout.js"></script>
+</body>
+</html>

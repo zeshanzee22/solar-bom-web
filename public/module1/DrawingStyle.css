@@ -1,0 +1,87 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.drawing-nav {
+    background: #333;
+    width: 100%;
+    padding: 15px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.drawing-nav h2 { margin: 0; font-size: 1.2rem; }
+
+.btn-group button {
+    background: #555;
+    color: white;
+    border: 1px solid #777;
+    padding: 8px 15px;
+    cursor: pointer;
+    margin: 0 5px;
+    border-radius: 4px;
+    transition: 0.2s;
+}
+
+.btn-group button:hover { background: #3eb6ff; border-color: #3eb6ff; }
+
+.print-btn {
+    background: #ffc022;
+    color: #333;
+    font-weight: bold;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#drawing-container {
+    margin: 20px;
+    background: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    width: 90%;
+    max-width: 1200px;
+    min-height: 600px;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+}
+
+/* SVG Specifics */
+svg {
+    border: 1px solid #eee;
+}
+
+@media print {
+    .drawing-nav { display: none; }
+    #drawing-container { box-shadow: none; width: 100%; margin: 0; }
+}
+
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #fff;
+    padding-left: 8px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+}
+.nav-item .nav-btn {
+    border: none; /* Remove border from button since wrapper has it */
+    margin: 0;
+}
+.export-check {
+    width: 16px; 
+    height: 16px; 
+    cursor: pointer;
+}

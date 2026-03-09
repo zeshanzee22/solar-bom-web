@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Engineering Drawings</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+    
+    <style>
+        body { margin: 0; padding: 20px; font-family: 'Segoe UI', Arial, sans-serif; background: #eee; }
+        .nav-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
+        .nav-btn { 
+            padding: 10px 15px; border: 1px solid #aaa; background: #fff; color: #333; 
+            border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600;
+        }
+        .nav-btn:hover { background: #e2e6ea; }
+        .nav-btn.active { background: #007bff; color: white; border-color: #007bff; }
+        
+        #btnExportDrawings {
+            background: #d35400; color: white; border: 1px solid #a04000; margin-left: auto;
+        }
+        #btnExportDrawings:hover { background: #e67e22; }
+
+        #drawing-container { 
+            width: 100%; height: 80vh; background: white; 
+            border: 1px solid #ccc; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden; 
+        }
+        
+        /* Hidden Logo Image for PDF Generation */
+        #companyLogo { display: none; }
+    </style>
+</head>
+<body>
+
+    <img id="companyLogo" src="logo.png" alt="Company Logo">
+
+    <div class="nav-bar">
+    <label class="nav-item">
+        <input type="checkbox" class="export-check" value="top" checked>
+        <button class="nav-btn active" onclick="setView('top', this)">1. Solar Panel Top Layout</button>
+    </label>
+    <label class="nav-item">
+        <input type="checkbox" class="export-check" value="structure" checked>
+        <button class="nav-btn" onclick="setView('structure', this)">2. Structural View</button>
+    </label>
+    <label class="nav-item">
+        <input type="checkbox" class="export-check" value="dims" checked>
+        <button class="nav-btn" onclick="setView('dims', this)">3. Purlin & Rafter Dimensions</button>
+    </label>
+    <label class="nav-item">
+        <input type="checkbox" class="export-check" value="gaps" checked>
+        <button class="nav-btn" onclick="setView('gaps', this)">4. Vertical Columns/Poles Spacing</button>
+    </label>
+    <label class="nav-item">
+        <input type="checkbox" class="export-check" value="side" checked>
+        <button class="nav-btn" onclick="setView('side', this)">5. Structure (Slope) Side View</button>
+    </label>
+    
+    <button id="btnExportDrawings" class="nav-btn" onclick="exportEngineeringDrawings('a4')">
+        📥 Export PDF
+    </button>
+</div>
+
+    <div id="drawing-container"></div>
+
+    <script src="DrawUtils.js"></script>
+    <script src="PanelLayout.js"></script>
+    <script src="StructuralTop.js"></script>
+    <script src="RafterPurlinDetail.js"></script>
+    <script src="ColumnGapDetail.js"></script>
+    <script src="SideProfile.js"></script>
+    <script src="ExportDrawing.js"></script>
+    <script src="Logo.js"></script>
+
+    <script>
+        let panZoomInstance = null;
+
+        window.onload = function() {
+            reloadData();
+            setView('top', document.querySelector('.nav-btn.active')); 
+        };
+
+        function reloadData() {
+            const rawData = localStorage.getItem('solarBOMData');
+            if(rawData) {
+                window.lastBOMResults = JSON.parse(rawData);
+            }
+        }
+
+        function setView(view, btn) {
+            reloadData();
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+
+            const container = document.getElementById('drawing-container');
+            if(!window.lastBOMResults) {
+                container.innerHTML = "<h3 style='text-align:center; padding-top:50px;'>No BOM Data. Calculate First.</h3>";
+                return;
+            }
+
+            let svgString = "";
+            try {
+                if(view === 'top' && typeof DrawSolarLayout !== 'undefined') svgString = DrawSolarLayout.draw();
+                else if(view === 'structure' && typeof DrawStructuralTop !== 'undefined') svgString = DrawStructuralTop.draw();
+                else if(view === 'dims' && typeof DrawRafterPurlin !== 'undefined') svgString = DrawRafterPurlin.draw();
+                else if(view === 'gaps' && typeof DrawColumnGap !== 'undefined') svgString = DrawColumnGap.draw();
+                else if(view === 'side' && typeof SideProfile !== 'undefined') svgString = SideProfile.draw();
+
+                if(svgString) {
+                    container.innerHTML = svgString; // 1. Draw the SVG
+
+                    // --- CRITICAL FIX: Enable clicks for both Top and Structure views ---
+                    if(view === 'top' || view === 'structure') {
+                        enablePanelEditing(); 
+                    }
+                    // ------------------------------------------------------------------
+
+                    const svgElement = container.querySelector('svg');
+                    if(svgElement && window.svgPanZoom) {
+                        if(panZoomInstance) panZoomInstance.destroy();
+                        if(!svgElement.id) svgElement.id = "current-svg";
+                        panZoomInstance = svgPanZoom(svgElement, {
+                            zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    </script>
+
+    <script>
+    // 1. Initialize Global Memory for Air Pockets
+    // We attach it to 'window' so other files can see it
+    if (!window.solarAirPockets) {
+        window.solarAirPockets = new Set();
+    }
+
+    function enablePanelEditing() {
+        const panels = document.querySelectorAll('.clickable-panel');
+
+        panels.forEach(panel => {
+            // Save original color
+            const originalFill = panel.getAttribute("fill") || panel.style.fill;
+            panel.setAttribute("data-org-fill", originalFill);
+
+            // Add Listener
+            panel.removeEventListener('click', togglePanelVisibility);
+            panel.addEventListener('click', togglePanelVisibility);
+            panel.style.cursor = "pointer";
+        });
+    }
+
+    function togglePanelVisibility(e) {
+        const panel = e.target;
+        const pID = panel.id; // Get the ID (e.g., "p-0-1")
+
+        if (window.solarAirPockets.has(pID)) {
+            // --- IT WAS HIDDEN, NOW RESTORE IT ---
+            window.solarAirPockets.delete(pID); // Remove from memory
+            
+            panel.style.opacity = "1";
+            const savedColor = panel.getAttribute("data-org-fill");
+            panel.setAttribute("fill", savedColor);
+            panel.style.fill = savedColor;
+        } else {
+            // --- HIDE IT (Create Air Pocket) ---
+            window.solarAirPockets.add(pID); // Add to memory
+            
+            panel.style.opacity = "0.1";
+            panel.setAttribute("fill", "#cccccc");
+            panel.style.fill = "#cccccc";
+        }
+        
+        console.log("Current Air Pockets:", Array.from(window.solarAirPockets));
+    }
+</script>
+
+
+</body>
+</html>

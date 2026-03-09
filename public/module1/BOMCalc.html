@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Elevated Structure BOM Calculator</title>
+
+    <link rel="stylesheet" href="Style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/3.0.10/lib/umd.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+
+    <script src="Input.js"></script>
+    <script src="Database.js"></script>
+    <script src="Logo.js"></script>
+    <script src="HelpManager.js"></script>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="full-width">
+            <h1>Solar Elevated Structure BOM Calculator</h1>
+            <p class="subtitle">Solar Structure Designing Tool</p>
+        </div>
+
+        <div class="card">
+            <h2>Inputs</h2>
+
+            <div class="section-grid" style="background:#f8f9fa; padding:15px; border-radius:4px; margin-bottom:20px;">
+                <div class="input-wrapper">
+                    <label>Customer Name</label>
+                    <div class="input-group">
+                        <input type="text" id="CustName" placeholder="e.g. Ismail Raza"
+                            style="border:none; padding:10px; width:100%;">
+                    </div>
+                </div>
+                <div class="input-wrapper">
+                    <label>Customer Location</label>
+                    <div class="input-group">
+                        <input type="text" id="CustLoc" placeholder="e.g. Multan"
+                            style="border:none; padding:10px; width:100%;">
+                    </div>
+                </div>
+
+                <div class="input-wrapper">
+                    <label>Company Name</label>
+                    <div class="input-group">
+                        <input type="text" id="CompName" placeholder="e.g. Solar Struktura"
+                            style="border:none; padding:10px; width:100%;">
+                    </div>
+                </div>
+            </div>
+
+            <h3>Solar Panel Info <span class="help-btn" onclick="showHelp('panel-info')">?</span></h3>
+            <div class="section-grid">
+                <div class="input-wrapper">
+                    <label>Solar Panel Module</label>
+                    <div class="input-group">
+                        <select id="PMod" onchange="toggleCustomPanel()" style="width:100%; border:none; padding:10px;">
+                        </select>
+                    </div>
+
+                    <div id="CustomPanelInputs" class="hidden">
+                        <div class="grid-5-col-compact">
+                            <script>createSimpleInput('CustPL', 'Length', '2278');</script>
+                            <script>createSimpleInput('CustPW', 'Width', '1134');</script>
+                            <div class="input-wrapper">
+                                <label>Wattage</label>
+                                <div class="input-group"
+                                    style="display:flex; align-items:center; background:white; border:1px solid #ccc; border-radius:4px; overflow:hidden;">
+                                    <input type="number" id="CustWatt" value="585" placeholder="585W"
+                                        style="flex:1; border:none; padding:8px; outline:none;">
+                                    <span
+                                        style="padding:0 10px; background:#eee; color:#333; font-weight:bold; font-size:0.8em; height:40px; display:flex; align-items:center; border-left:1px solid #ddd;">W</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>createInput('PVhole', 'Solar Panel Hole Config.', '1400', 'mm');</script>
+            </div>
+
+            <h3>Solar Array Config. <span class="help-btn" onclick="showHelp('array-config')">?</span></h3>
+            <div class="section-grid">
+                <div class="input-wrapper" style="grid-column: 1 / -1;">
+                    <label>Orientation</label>
+                    <div class="input-group">
+                        <select id="Orient" style="width:100%; border:none; padding:10px;">
+                            <option value="Portrait" selected>Portrait</option>
+                            <option value="Landscape">Landscape</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="input-wrapper"><label>Solar Panel Qty (N-S)</label>
+                        <div class="input-group"><input type="number" id="PVQtyNS" value="6"
+                                onchange="updateWalkwayOptions(); calculateBOM();"></div>
+                    </div>
+                    <div class="input-wrapper"><label>Solar Panel Qty (E-W)</label>
+                        <div class="input-group"><input type="number" id="PVQtyEW" value="8"
+                                onchange="updateWalkwayOptions(); calculateBOM();"></div>
+                    </div>
+                </div>
+                <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <script>createInput('PVGapNS', 'Solar Panel Gap (N-S)', '1.5', 'inch');</script>
+                    <script>createInput('PVGapEW', 'Solar Panel Gap (E-W)', '1.5', 'inch');</script>
+                </div>
+            </div>
+
+            <h3>Structural Profiles <span class="help-btn" onclick="showHelp('profiles')">?</span></h3>
+            <div class="input-wrapper">
+                <label style="color:var(--accent-color);">Purlin Profile (Auto-Fill)</label>
+                <select id="PurProfile" class="profile-select" onchange="applyProfile('Pur', this.value)">
+                    <option value="">Custom / Manual Entry</option>
+                </select>
+                <div class="section-grid">
+                    <script>createInput('PurH', 'Purlin Height', '3', 'inch'); createInput('PurW', 'Purlin Width', '1.5', 'inch');</script>
+                </div>
+            </div>
+            <div class="input-wrapper">
+                <label style="color:var(--accent-color);">Rafter Profile (Auto-Fill)</label>
+                <select id="RafProfile" class="profile-select" onchange="applyProfile('Raf', this.value)">
+                    <option value="">Custom / Manual Entry</option>
+                </select>
+                <div class="section-grid">
+                    <script>createInput('RafH', 'Rafter Height', '5', 'inch'); createInput('RafW', 'Rafter Width', '2.5', 'inch');</script>
+                </div>
+            </div>
+            <div class="input-wrapper">
+                <label style="color:var(--accent-color);">Column Profile (Auto-Fill)</label>
+                <select id="ColProfile" class="profile-select"
+                    onchange="applyProfile('Col', this.value); checkTopPlate();">
+                    <option value="">Custom / Manual Entry</option>
+                </select>
+                <div class="section-grid">
+                    <script>createInput('ColH', 'Vertical Column Height', '5', 'inch'); createInput('ColW', 'Vertical Column Width', '2.5', 'inch');</script>
+                </div>
+                <div id="TopPlateSection" class="hidden">
+                    <div style="font-size:0.9em; font-weight:bold; color:#c0392b; margin-bottom:10px;">⚠ Round Pipe
+                        Detected: Top Plate Required</div>
+                    <div class="section-grid">
+                        <script>createInput('TPSize', 'Top Plate Size (Square)', '8', 'inch'); createInput('TPThick', 'Top Plate Thickness', '6', 'mm');</script>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Structure Height & Angle <span class="help-btn" onclick="showHelp('height-angle')">?</span></h3>
+            <div class="section-grid">
+                <div class="input-wrapper"><label>Structure Tilt Angle (°)</label>
+                    <div class="input-group"><input type="number" id="TiltA" value="10"></div>
+                </div>
+                <script>createInput('SFH', 'Structure Front Height', '6', 'ft');</script>
+            </div>
+
+            <h3>Vertical Support (Column/Pole) Setup <span class="help-btn" onclick="showHelp('support-setup')">?</span>
+            </h3>
+            <div class="grid-2-col">
+                <div class="input-wrapper"><label>Vertical Support / Pole Qty (N-S)</label>
+                    <div class="input-group"><input type="number" id="ColQtyNS" value="4" onchange="calculateBOM()">
+                    </div>
+                </div>
+                <div class="input-wrapper"><label>Vertical Support / Pole Qty (E-W)</label>
+                    <div class="input-group"><input type="number" id="ColQtyEW" value="4" onchange="calculateBOM()">
+                    </div>
+                </div>
+
+                <div>
+                    <div id="StandardCantileverDiv">
+                        <script>createInput('CLNS', 'Cantilever N-S', '3', 'ft');</script>
+                    </div>
+                    <label
+                        style="font-size:0.85em; display:flex; align-items:center; cursor:pointer; margin-top:5px; margin-bottom:10px; color:#555;">
+                        <input type="checkbox" id="CustomCLNSCheck" style="width:auto; margin-right:8px;"
+                            onchange="toggleCustomCLNS()">
+                        Use custom Front & Back Cantilevers
+                    </label>
+                </div>
+
+                <div>
+                    <script>createInput('CLEW', 'Cantilever E-W', '2.5', 'ft');</script>
+                </div>
+            </div>
+
+            <div id="CustomCLNSDiv" class="hidden"
+                style="margin-bottom:15px; background:#f8f9fa; border:1px solid #ddd; padding:15px; border-radius:4px;">
+                <div class="grid-2-col">
+                    <script>createInput('CLNS_Front', 'Front Cantilever (N-S)', '3', 'ft');</script>
+                    <script>createInput('CLNS_Back', 'Back Cantilever (N-S)', '1.5', 'ft');</script>
+                </div>
+            </div>
+
+            <div class="section-grid" style="margin-top: 20px;">
+                <div class="input-wrapper">
+                    <label>Rafter Cut Mode <span class="help-btn" onclick="showHelp('rafter-cut-mode')">?</span></label>
+                    <div class="input-group">
+                        <select id="RafFullPVEdge" style="width:100%; border:none; padding:10px;">
+                            <option value="RafFullPVEdge" selected>A. Full Till Panel Edge</option>
+                            <option value="RafExt">B. Extended From Purlin Edge</option>
+                            <option value="RaftCutPurEdge">C. Cut Till Purlin Edge</option>
+                        </select>
+                    </div>
+                </div>
+                <script>createInput('RaftCalVal', 'Extension Amount', '4', 'inch');</script>
+            </div>
+
+            <h3>Walkway Platform Manager <span class="help-btn" onclick="showHelp('walkway-manager')">?</span></h3>
+            <div style="margin-bottom: 10px;">
+                <button class="calculate-btn" style="width:48%; background:#333; font-size:0.9em; padding:10px;"
+                    onclick="addWalkwayUI('horizontal')">+ Add Horizontal Walkway</button>
+                <button class="calculate-btn" style="width:48%; background:#333; font-size:0.9em; padding:10px;"
+                    onclick="addWalkwayUI('vertical')">+ Add Vertical Walkway</button>
+            </div>
+            <div id="walkway-list-container"></div>
+
+            <div class="input-wrapper" style="margin-top:15px; border-top:1px solid #ddd; padding-top:15px;">
+                <label style="font-weight:bold; display:flex; align-items:center; cursor:pointer;">
+                    <input type="checkbox" id="FoundationCheck" style="width:auto; margin-right:10px;"
+                        onchange="document.getElementById('FoundationInputDiv').classList.toggle('hidden', !this.checked)">
+                    Include Concrete Foundation Block
+                </label>
+
+                <div id="FoundationInputDiv" class="hidden" style="margin-top:10px;">
+                    <div class="section-grid" style="grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div class="input-wrapper">
+                            <label>Size / Dimensions</label>
+                            <input type="text" id="FoundSize" placeholder="e.g. 1.5ft x 1.5ft x 1ft"
+                                style="padding:8px; width:100%;">
+                        </div>
+                        <div class="input-wrapper">
+                            <label>Specs / Ratio</label>
+                            <input type="text" id="FoundSpec" placeholder="e.g. 1:2:4" style="padding:8px; width:100%;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-wrapper" style="margin-top:15px; border-top:1px solid #ddd; padding-top:15px;">
+                <label style="font-weight:bold; display:flex; align-items:center; cursor:pointer;">
+                    <input type="checkbox" id="NutBoltCheck" style="width:auto; margin-right:10px;" checked>
+                    Include Solar Panel Nut Bolts (4 per panel)
+                </label>
+            </div>
+
+
+
+
+            <div class="button-group" style="margin-top:20px;">
+                <button class="clear-btn" onclick="resetInputs()">RESET</button>
+                <button class="calculate-btn" onclick="calculateBOM()">CALCULATE BOM</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="result-header">
+                <h2 style="margin:0;">Results</h2>
+                <div>
+                    <label style="font-size:0.85em; font-weight:bold; margin-right:5px;">Output Unit:</label>
+                    <select id="OutputUnit" onchange="calculateBOM()" style="padding:5px; border-radius:4px;">
+                        <option value="ft" selected>Feet (Decimal)</option>
+                        <option value="ft_in">Ft & Inches</option>
+                        <option value="mm">Millimeters</option>
+                        <option value="cm">Centimeters</option>
+                        <option value="m">Meters</option>
+                        <option value="inch">Inches</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="results-container">
+                <p style="color:#999; text-align:center;">Enter data and click Calculate</p>
+            </div>
+
+            <h3>Vertical Support (Column / Pole) Heights</h3>
+            <table id="poleTable">
+                <thead>
+                    <tr>
+                        <th style="width:50%">Vertical Support (Column/Pole)#</th>
+                        <th>Height</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <div class="export-section">
+                <div class="export-controls">
+                    <select id="ExportFormat"
+                        style="padding: 10px; border: 1px solid #ddd; border-radius: 4px; flex: 1;">
+                        <option value="xlsx">Export as Excel (.xlsx)</option>
+                        <option value="pdf">Export as PDF (.pdf)</option>
+                    </select>
+                    <button class="calculate-btn" style="background-color: #3E7C59; margin-top:0;"
+                        onclick="generateBOM()">📥 GENERATE BILL OF MATERIALS</button>
+                </div>
+
+                <button class="calculate-btn" style="background-color: #A83C3C; margin-top:10px;"
+                    onclick="openDrawingWindow()">
+                    📐 OPEN 2D ENGINEERING DRAWING
+                </button>
+
+                <div
+                    style="margin-top: 20px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; font-family: Arial, sans-serif;">
+                    <div
+                        style="background: #444; color: white; text-align: center; padding: 8px; font-weight: bold; font-size: 0.9em;">
+                        Unit Converter
+                    </div>
+                    <div style="display: flex; background: #404040;">
+                        <input type="number" id="quickVal" value="1" oninput="runQuickConv()"
+                            style="flex: 1; width: 0; border: 1px solid #ccc; padding: 10px; text-align: center; font-weight: bold; outline: none;">
+
+                        <select id="quickFrom" onchange="runQuickConv()"
+                            style="flex: 1.2; width: 0; background: #FFCD2D; border: 1px solid #ccc; border-left: none; padding: 10px; font-weight: bold; outline: none;">
+                            <option value="inch">Inches</option>
+                            <option value="ft">Feet</option>
+                            <option value="mm">mm</option>
+                            <option value="cm">cm</option>
+                            <option value="m">m</option>
+                            <option value="suttar">suttar</option>
+                        </select>
+
+                        <div id="quickRes"
+                            style="flex: 1; width: 0; border: 1px solid #ccc; border-left: none; padding: 10px; text-align: center; font-weight: bold; background: #f9f9f9; display: flex; align-items: center; justify-content: center;">
+                            12
+                        </div>
+
+                        <select id="quickTo" onchange="runQuickConv()"
+                            style="flex: 1.2; width: 0; background: #FFCD2D; border: 1px solid #ccc; border-left: none; padding: 10px; font-weight: bold; outline: none;">
+                            <option value="ft">Feet</option>
+                            <option value="ft_in">Ft & In</option>
+                            <option value="inch">Inches</option>
+                            <option value="mm">mm</option>
+                            <option value="cm">cm</option>
+                            <option value="m">m</option>
+                            <option value="suttar">suttart</option>
+                        </select>
+                    </div>
+                </div>
+
+
+                <h3>Project Notes</h3>
+                <textarea id="ProjectNotes"
+                    style="width: 80%; height: 80px; padding: 20px; border-radius: 5px; border: 1px solid #ccc; font-family: Arial;"
+                    placeholder="Project Confirmed, Quotation Submitted, In discussion, Extension, Full Project, Installation Only, Structure Installation, DC Wire 50ft"></textarea>
+            </div>
+        </div>
+    </div>
+    </div>
+    <script src="QuickConverter.js"></script>
+    <script src="Formulas.js"></script>
+    <script src="ExportBom.js"></script>
+
+    <script>
+        function openDrawingWindow() {
+            if (!window.lastBOMResults) {
+                // If user hasn't calculated yet, try to run calculation first
+                if (typeof calculateBOM === "function") {
+                    calculateBOM();
+                }
+                if (!window.lastBOMResults) {
+                    alert("Please click 'CALCULATE BOM' first to generate data for drawings.");
+                    return;
+                }
+            }
+
+            // Save Data to Storage so new window can read it
+            localStorage.setItem('solarBOMData', JSON.stringify(window.lastBOMResults));
+
+            // Open New Window
+            // window.open('Drawing.html', '_blank');
+            window.parent.location.href = "/drawing";
+        }
+    </script>
+
+</body>
+
+</html>
