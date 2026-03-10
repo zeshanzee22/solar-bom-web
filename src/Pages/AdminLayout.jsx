@@ -1,8 +1,9 @@
-import React from 'react'
 
+//main admin dashboard
 const AdminLayout = () => {
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+    <div>
+      {/* sidebar */}
       <p>AdminLayout </p>
     </div>
   )

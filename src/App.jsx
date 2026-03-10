@@ -4,6 +4,7 @@ import Home from "./Pages/Home";
 import Calculator from "./Pages/Calculator";
 import Module2 from "./Pages/Module2";
 import AdminLayout from "./Pages/AdminLayout";
+import AdminRoutes from "./components/admin/AdminRoutes";
 
 const App = () => {
   return (
@@ -20,10 +21,8 @@ const App = () => {
         
 
         {/* Admin Layout */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Home />} />
-          <Route path="calculator" element={<Calculator page="BOMCalc" />} />
-        </Route>
+        <Route path="/admin/*" element={<AdminRoutes />}/>
+          
       </Routes>
     </BrowserRouter>
   );
