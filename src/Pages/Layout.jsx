@@ -3,7 +3,9 @@ import { Outlet, Link } from "react-router-dom";
 
 export default function Layout() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+    <div
+      style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
+    >
       {/* Navbar */}
       <header
         style={{
@@ -21,14 +23,19 @@ export default function Layout() {
           justifyContent: "space-between",
         }}
       >
-        
         <Link to="/" style={{ color: "white", marginRight: 15 }}>
-        <h1 style={{ margin: 0 }}>My App Navbar</h1>
+          <h1 style={{ margin: 0 }}>My App Navbar</h1>
         </Link>
         <nav>
-          <Link to="/" style={{ color: "white", marginRight: 15 }}>Home</Link>
-          <Link to="/calculator" style={{  color: "white", marginRight: 15 }}>Module 1</Link>
-          <Link to="/module2" style={{ color: "white" }}>Module 2</Link>
+          <Link to="/" style={{ color: "white", marginRight: 15 }}>
+            Home
+          </Link>
+          <Link to="/calculator" style={{ color: "white", marginRight: 15 }}>
+            Module 1
+          </Link>
+          <Link to="/module2" style={{ color: "white" }}>
+            Module 2
+          </Link>
         </nav>
       </header>
 
@@ -38,16 +45,7 @@ export default function Layout() {
       </main>
 
       {/* Footer */}
-      <footer
-        style={{
-          height: "50px",
-          background: "#2c6747",
-          color: "white",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      <footer className="h-12.5 bg-[#2c6747] text-white flex items-center justify-center">
         My App Footer
       </footer>
     </div>
