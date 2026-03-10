@@ -46,7 +46,8 @@ export default function Layout() {
 
       {/* Footer */}
       <footer className="h-12.5 bg-[#2c6747] text-white flex items-center justify-center">
-        My App Footer
+        <h1>my app footer</h1>
+        <p>test</p>
       </footer>
     </div>
   );
