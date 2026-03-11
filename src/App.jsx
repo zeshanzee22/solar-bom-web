@@ -5,6 +5,8 @@ import Calculator from "./Pages/Calculator";
 import Module2 from "./Pages/Module2";
 import AdminLayout from "./Pages/AdminLayout";
 import AdminRoutes from "./components/admin/AdminRoutes";
+import Login from "./components/main/Login";
+import ProtectedRoute from "./components/shared/ProtectedRoute";
 
 const App = () => {
   return (
@@ -13,16 +15,35 @@ const App = () => {
         {/* Main Layout */}
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
-          <Route path="/calculator" element={<Calculator page="BOMCalc" />} />
-          <Route path="/drawing" element={<Calculator page="Drawing" />} />
-          <Route path="/module2" element={<Module2 page="index" />} />
+          <Route
+            path="/calculator"
+            element={
+              <ProtectedRoute>
+                <Calculator page="BOMCalc" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/drawing"
+            element={
+              <ProtectedRoute>
+                <Calculator page="Drawing" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/module2"
+            element={
+              <ProtectedRoute>
+                <Module2 page="index" />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/login" element={<Login />} />
         </Route>
 
-        
-
         {/* Admin Layout */}
-        <Route path="/admin/*" element={<AdminRoutes />}/>
-          
+        <Route path="/admin/*" element={<AdminRoutes />} />
       </Routes>
     </BrowserRouter>
   );
