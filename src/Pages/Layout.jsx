@@ -1,53 +1,23 @@
-// src/components/Layout.jsx
-import { Outlet, Link } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+import Navbar from "../components/shared/Navbar";
+import Footer from "../components/shared/Footer";
 
 export default function Layout() {
   return (
-    <div
-      style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
-    >
+    <div className="flex flex-col min-h-screen">
       {/* Navbar */}
-      <header
-        style={{
-          height: "60px",
-          background: "#e64c4c",
-          color: "white",
-          display: "flex",
-          alignItems: "center",
-          padding: "0 20px",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 1000,
-          justifyContent: "space-between",
-        }}
-      >
-        <Link to="/" style={{ color: "white", marginRight: 15 }}>
-          <h1 style={{ margin: 0 }}>My App Navbar</h1>
-        </Link>
-        <nav>
-          <Link to="/" style={{ color: "white", marginRight: 15 }}>
-            Home
-          </Link>
-          <Link to="/calculator" style={{ color: "white", marginRight: 15 }}>
-            Module 1
-          </Link>
-          <Link to="/module2" style={{ color: "white" }}>
-            Module 2
-          </Link>
-        </nav>
+      <header>
+        <Navbar />
       </header>
 
       {/* Main content */}
-      <main style={{ flex: 1, marginTop: "60px" }}>
+      <main className="pt-16 flex-1">
         <Outlet />
       </main>
 
-      {/* Footer */}
-      <footer className="h-12.5 bg-[#2c6747] text-white flex items-center justify-center">
-        <h1>my app footer</h1>
-        <p>test</p>
+     {/* Footer */}
+      <footer>
+        <Footer/>
       </footer>
     </div>
   );
