@@ -1,28 +1,78 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "../../store/authStore";
-import { loginApi } from "../../api/ authApi";
+import { loginApi } from "../../api/authApi";
+import { useNavigate } from "react-router-dom";
+
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email  is required")
+    .refine(
+      (val) =>
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || /^\d{10,15}$/.test(val),
+      "Enter a valid email address",
+    ),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
 
 export default function Login() {
-  const login = useAuthStore((state) => state.user);
+  const login = useAuthStore((state) => state.login);
   const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState("");
+  const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    mode: "onChange", // validate while typing
+  });
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
 
+  const onSubmit = async (data) => {
     try {
-      const res = await loginApi({
-        phone: email,
-        password: password,
-      });
+      setServerError(""); // clear old errors
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), 10000),
+      );
 
+      const res = await Promise.race([
+        loginApi({
+          email: data.email,
+          password: data.password,
+        }),
+        timeout,
+      ]);
+
+     
+      // Save user and token in your store
       login(res.data.user, res.data.token);
+
+      // Navigate based on role
+      if (res.data.user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/"); // normal user
+      }
     } catch (error) {
       console.log("Login failed", error);
+      setServerError("Login failed. Please try again.");
     }
   };
+
+  //for server error
+  const [email, password] = watch(["email", "password"]);
+  useEffect(() => {
+    if (serverError) setServerError("");
+  }, [email, password]);
 
   return (
     <div className="min-h-[calc(100vh-10rem)] flex items-center justify-center bg-white">
@@ -34,9 +84,8 @@ export default function Login() {
           Sign in
         </h2>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          {/* Email */}
-
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* EMAIL */}
           <div>
             <label className="block text-sm text-gray-500 mb-1">
               Email or mobile phone number
@@ -44,15 +93,22 @@ export default function Login() {
             <input
               type="text"
               placeholder=""
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full text-gray-600 rounded-lg px-3 py-2 border border-[rgba(102,102,102,0.3)] 
-             focus:outline-none focus:border-[rgba(102,102,102,0.8)] focus:ring-0"
+              {...register("email")}
+              className={`w-full text-gray-600 rounded-lg px-3 py-2 border 
+                ${
+                  errors.email
+                    ? "border-red-700 focus:border-red-700"
+                    : "border-[rgba(102,102,102,0.3)] focus:border-[rgba(102,102,102,0.8)]"
+                } focus:outline-none focus:ring-0`}
             />
+            {errors.email && (
+              <p className="text-red-700 text-sm mt-1">
+                {errors.email.message}
+              </p>
+            )}
           </div>
 
-          {/* Password */}
-
+          {/* PASSWORD */}
           <div>
             {/* Label + Eye */}
             <div className="flex items-center justify-between mb-1">
@@ -77,14 +133,22 @@ export default function Login() {
             {/* Input */}
             <input
               type={showPassword ? "text" : "password"}
-              placeholder=""
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full text-gray-600 rounded-lg px-3 py-2 border border-[rgba(102,102,102,0.3)] 
-                   focus:outline-none focus:border-[rgba(102,102,102,0.8)] focus:ring-0"
+              {...register("password")}
+              className={`w-full text-gray-600 rounded-lg px-3 py-2 border 
+                ${
+                  errors.password
+                    ? "border-red-700 focus:border-red-700"
+                    : "border-[rgba(102,102,102,0.3)] focus:border-[rgba(102,102,102,0.8)]"
+                } focus:outline-none focus:ring-0`}
             />
+            {errors.password && (
+              <p className="text-red-700 text-sm mt-1">
+                {errors.password.message}
+              </p>
+            )}
           </div>
 
+          {/* PRIVACY TEXT */}
           <p className="text-sm text-gray-600 mt-4 text-center">
             By continuing, you agree to the{" "}
             <a
@@ -107,13 +171,30 @@ export default function Login() {
             .
           </p>
 
-          {/* Button */}
+          {/* BUTTON */}
           <button
             type="submit"
-            className="w-full bg-gray-400 text-white py-2 rounded-full hover:bg-green-700 transition cursor-pointer"
+            disabled={!isValid || isSubmitting}
+            className={`w-full py-2 rounded-full transition flex items-center justify-center gap-2
+              ${
+                isValid
+                  ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer"
+                  : "bg-gray-400 cursor-not-allowed text-white"
+              }`}
           >
-            Login
+            {isSubmitting && (
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            )}
+
+            {isSubmitting ? "Logging in..." : "Login"}
           </button>
+
+          {/* SERVER ERROR */}
+          {serverError && (
+            <div className=" text-red-700 text-sm mt-2 rounded-md">
+              {serverError}
+            </div>
+          )}
         </form>
       </div>
     </div>
