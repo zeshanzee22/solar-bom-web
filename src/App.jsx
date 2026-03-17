@@ -7,6 +7,9 @@ import AdminLayout from "./Pages/AdminLayout";
 import AdminRoutes from "./components/admin/AdminRoutes";
 import Login from "./components/main/Login";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
+import RedirectIfLoggedIn from "./components/shared/RedirectIfLoggedIn";
+import PricingPage from "./Pages/PricingPage";
+import PremiumRoute from "./components/shared/PremiumRoute";
 
 const App = () => {
   return (
@@ -15,14 +18,16 @@ const App = () => {
         {/* Main Layout */}
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
+          <Route path="/pricing" element={<PricingPage />} />
           <Route
-            path="/calculator"
+            path="/t1"
             element={
-              <ProtectedRoute>
+              <PremiumRoute module="t1">
                 <Calculator page="BOMCalc" />
-              </ProtectedRoute>
+              </PremiumRoute>
             }
           />
+
           <Route
             path="/drawing"
             element={
@@ -31,15 +36,24 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+
           <Route
-            path="/module2"
+            path="/t2"
             element={
-              <ProtectedRoute>
+              <PremiumRoute module="t2">
                 <Module2 page="index" />
-              </ProtectedRoute>
+              </PremiumRoute>
             }
           />
-          <Route path="/login" element={<Login />} />
+
+          <Route
+            path="/login"
+            element={
+              <RedirectIfLoggedIn>
+                <Login />
+              </RedirectIfLoggedIn>
+            }
+          />
         </Route>
 
         {/* Admin Layout */}
