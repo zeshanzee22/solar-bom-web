@@ -18,6 +18,73 @@
     <script src="Database.js"></script>
     <script src="Logo.js"></script>
     <script src="HelpManager.js"></script>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #eee;
+        }
+
+        .nav-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .nav-btn {
+            padding: 5px 10px;
+            border: 1px solid #aaa;
+            background: #fff;
+            color: #333;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .nav-btn:hover {
+            background: #e2e6ea;
+        }
+
+        .nav-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        #btnExportDrawings {
+            background: #d35400;
+            color: white;
+            border: 1px solid #a04000;
+            margin-left: auto;
+        }
+
+        #btnExportDrawings:hover {
+            background: #e67e22;
+        }
+
+        #drawing-container {
+            width: 100%;
+            height: 80vh;
+            background: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* Hidden Logo Image for PDF Generation */
+        #companyLogo {
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
@@ -27,7 +94,7 @@
             <h1>Solar Elevated Structure BOM Calculator</h1>
             <p class="subtitle">Solar Structure Designing Tool</p>
         </div>
-
+        <!-- 1 - INPUTS CARD -->
         <div class="card">
             <h2>Inputs</h2>
 
@@ -36,7 +103,7 @@
                     <label>Customer Name</label>
                     <div class="input-group">
                         <input type="text" id="CustName" placeholder="e.g. Ismail Raza"
-                            style="border:none; padding:10px; width:100%;">
+                            style="border:none; padding:5px; width:100%;">
                     </div>
                 </div>
                 <div class="input-wrapper">
@@ -99,11 +166,11 @@
                 <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                     <div class="input-wrapper"><label>Solar Panel Qty (N-S)</label>
                         <div class="input-group"><input type="number" id="PVQtyNS" value="6"
-                                onchange="updateWalkwayOptions(); calculateBOM();"></div>
+                                oninput="updateWalkwayOptions(); calculateBOM();"></div>
                     </div>
                     <div class="input-wrapper"><label>Solar Panel Qty (E-W)</label>
                         <div class="input-group"><input type="number" id="PVQtyEW" value="8"
-                                onchange="updateWalkwayOptions(); calculateBOM();"></div>
+                                oninput="updateWalkwayOptions(); calculateBOM();"></div>
                     </div>
                 </div>
                 <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -255,57 +322,115 @@
             </div>
         </div>
 
+        <!-- 2 - DRAWINGS CARD -->
         <div class="card">
-            <div class="result-header">
-                <h2 style="margin:0;">Results</h2>
-                <div>
-                    <label style="font-size:0.85em; font-weight:bold; margin-right:5px;">Output Unit:</label>
-                    <select id="OutputUnit" onchange="calculateBOM()" style="padding:5px; border-radius:4px;">
-                        <option value="ft" selected>Feet (Decimal)</option>
-                        <option value="ft_in">Ft & Inches</option>
-                        <option value="mm">Millimeters</option>
-                        <option value="cm">Centimeters</option>
-                        <option value="m">Meters</option>
-                        <option value="inch">Inches</option>
-                    </select>
-                </div>
+
+
+            <img id="companyLogo" src="logo.png" alt="Company Logo">
+
+            <div class="nav-bar">
+                <label class="nav-item">
+                    <input type="checkbox" class="export-check" value="top" checked>
+                    <button class="nav-btn active" onclick="setView('top', this)">1. Solar Panel Top Layout</button>
+                </label>
+                <label class="nav-item">
+                    <input type="checkbox" class="export-check" value="structure" checked>
+                    <button class="nav-btn" onclick="setView('structure', this)">2. Structural View</button>
+                </label>
+                <label class="nav-item">
+                    <input type="checkbox" class="export-check" value="dims" checked>
+                    <button class="nav-btn" onclick="setView('dims', this)">3. Purlin & Rafter Dimensions</button>
+                </label>
+                <label class="nav-item">
+                    <input type="checkbox" class="export-check" value="gaps" checked>
+                    <button class="nav-btn" onclick="setView('gaps', this)">4. Vertical Columns/Poles Spacing</button>
+                </label>
+                <label class="nav-item">
+                    <input type="checkbox" class="export-check" value="side" checked>
+                    <button class="nav-btn" onclick="setView('side', this)">5. Structure (Slope) Side View</button>
+                </label>
+
+
             </div>
 
-            <div id="results-container">
-                <p style="color:#999; text-align:center;">Enter data and click Calculate</p>
-            </div>
+            <div id="drawing-container"></div>
 
-            <h3>Vertical Support (Column / Pole) Heights</h3>
-            <table id="poleTable">
-                <thead>
-                    <tr>
-                        <th style="width:50%">Vertical Support (Column/Pole)#</th>
-                        <th>Height</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
 
-            <div class="export-section">
+            <div>
                 <div class="export-controls">
                     <select id="ExportFormat"
                         style="padding: 10px; border: 1px solid #ddd; border-radius: 4px; flex: 1;">
                         <option value="xlsx">Export as Excel (.xlsx)</option>
                         <option value="pdf">Export as PDF (.pdf)</option>
                     </select>
+                    <!-- <button class="calculate-btn" style="background-color: #3E7C59; margin-top:0;"
+                        onclick="generateBOM()">📥 GENERATE BILL OF MATERIALS
+                    </button> -->
                     <button class="calculate-btn" style="background-color: #3E7C59; margin-top:0;"
-                        onclick="generateBOM()">📥 GENERATE BILL OF MATERIALS</button>
+                        onclick="handleGenerateBOM()">
+                        >
+                        📥 GENERATE BILL OF MATERIALS
+                    </button>
                 </div>
 
-                <button class="calculate-btn" style="background-color: #A83C3C; margin-top:10px;"
-                    onclick="openDrawingWindow()">
-                    📐 OPEN 2D ENGINEERING DRAWING
+                <button id="btnExportDrawings" class="nav-btn" onclick="exportEngineeringDrawings('a4')">
+                    📥 Export PDF
                 </button>
 
-                <div
-                    style="margin-top: 20px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; font-family: Arial, sans-serif;">
-                    <div
-                        style="background: #444; color: white; text-align: center; padding: 8px; font-weight: bold; font-size: 0.9em;">
+                <!-- <button class="calculate-btn" style="background-color: #A83C3C; margin-top:10px;"
+                    onclick="openDrawingWindow()">
+                    📐 OPEN 2D ENGINEERING DRAWING
+                </button> -->
+            </div>
+
+        </div>
+
+        <!-- 3 - RESULTS CARD-->
+        <div class="card">
+            <h4 style="margin:0; text-align: center;">Results section </h4>
+            <hr>
+            <div style="display: flex; flex-direction: row; justify-content:end; align-items: center;">
+                <label style="font-size:0.85em; color: #007bff; font-weight:bold; margin-right:5px;">Output
+                    Unit:
+                </label>
+                <select id="OutputUnit" onchange="calculateBOM()" style="padding:5px; border-radius:4px;">
+                    <option value="ft" selected>Feet (Decimal)</option>
+                    <option value="ft_in">Ft & Inches</option>
+                    <option value="mm">Millimeters</option>
+                    <option value="cm">Centimeters</option>
+                    <option value="m">Meters</option>
+                    <option value="inch">Inches</option>
+                </select>
+            </div>
+
+            <div id="results-container">
+                <p style="color:#999; text-align:center;">Enter data and click Calculate</p>
+            </div>
+
+            <hr>
+
+            <div style="display: flex; flex-direction: row; justify-content: space-between;
+             background:#333; border-radius: 10px; padding-left:10px; padding-right:10px;">
+                <label style="font-size:0.8em;  font-weight:bold; color: #fff; ">
+                    Vertical Support (Column / Pole)
+                </label>
+                <label style="font-size:0.8em; font-weight:bold;  color: #fff;">
+                    Heights
+                </label>
+            </div>
+
+            <hr>
+            <div id="poleTable"></div>
+
+
+
+            <div class="export-section">
+
+
+                <div style="margin-top: 10px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; 
+                    font-family: Arial, sans-serif;">
+                    <div style="background: #444; color: white; text-align: center; padding: 4px; 
+                        font-weight: bold; font-size: 0.9em;">
                         Unit Converter
                     </div>
                     <div style="display: flex; background: #404040;">
@@ -341,12 +466,14 @@
                 </div>
 
 
-                <h3>Project Notes</h3>
-                <textarea id="ProjectNotes"
-                    style="width: 80%; height: 80px; padding: 20px; border-radius: 5px; border: 1px solid #ccc; font-family: Arial;"
+                <h4>Project Notes</h4>
+                <textarea id="ProjectNotes" style="width: 100%; height: 80px; padding: 10px; border-radius: 5px; border: 1px solid #ccc;
+                     font-family: Arial;"
                     placeholder="Project Confirmed, Quotation Submitted, In discussion, Extension, Full Project, Installation Only, Structure Installation, DC Wire 50ft"></textarea>
             </div>
         </div>
+
+
     </div>
     </div>
     <script src="QuickConverter.js"></script>
@@ -374,6 +501,245 @@
             window.parent.location.href = "/drawing";
         }
     </script>
+    <script>
+        async function handleGenerateBOM() {
+            const btn = event.currentTarget;
+
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = 'Processing... ⏳';
+            btn.style.background = '#666';
+
+            try {
+                const token = TOKEN || localStorage.getItem('token');
+
+                if (!token) {
+                    alert("Please login first.");
+                    return;
+                }
+
+                // FIRST: track usage for t1
+                const usageResult = await trackToolUsage("t1");
+
+                if (!usageResult.success) {
+                    alert(usageResult.message); // limit reached
+                    window.parent.location.href = "/";
+                    return;
+                }
+
+                //  THEN: run your original function
+                generateBOM();
+
+                console.log("✅ BOM + tracking done");
+
+            } catch (error) {
+                console.error("❌ Error:", error);
+                alert("Something went wrong.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                btn.style.background = '#3E7C59';
+            }
+        }
+
+
+
+        async function trackToolUsage(toolName) {
+            const token = TOKEN || localStorage.getItem('token');
+
+            if (!token) {
+                console.warn("⚠️ No auth token found.");
+                return;
+            }
+
+            try {
+                const response = await fetch("http://127.0.0.1:8000/plans/user-plan/use_tool/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ tool: toolName })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    return {
+                        success: false,
+                        message: result.message || "Limit reached"
+                    };
+                }
+
+                // notify React
+                window.parent.postMessage({ type: "USAGE_UPDATED" }, "*");
+
+                return {
+                    success: true,
+                    data: result
+                };
+
+            } catch (err) {
+                return {
+                    success: false,
+                    message: "Network error"
+                };
+            }
+        }
+    </script>
+
+    <script>
+        let CURRENT_USER = null;
+        let TOKEN = null;
+
+        window.addEventListener("message", (event) => {
+            // Optional: security check (recommended later)
+            // if (event.origin !== "http://localhost:3000") return;
+
+            if (event.data && event.data.type === "AUTH_DATA") {
+                CURRENT_USER = event.data.user;
+                TOKEN = event.data.token;
+
+                console.log("✅ Received user - module1:", CURRENT_USER);
+                console.log("✅ Received token - module1:", TOKEN);
+            }
+        });
+    </script>
+
+
+
+
+
+
+    <!-- start of drawing scripts -->
+
+    <script src="DrawUtils.js"></script>
+    <script src="PanelLayout.js"></script>
+    <script src="StructuralTop.js"></script>
+    <script src="RafterPurlinDetail.js"></script>
+    <script src="ColumnGapDetail.js"></script>
+    <script src="SideProfile.js"></script>
+    <script src="ExportDrawing.js"></script>
+    <script src="Logo.js"></script>
+
+    <script>
+        let panZoomInstance = null;
+
+        window.onload = function () {
+            reloadData();
+            setView('top', document.querySelector('.nav-btn.active'));
+        };
+
+        function reloadData() {
+            const rawData = localStorage.getItem('solarBOMData');
+            if (rawData) {
+                window.lastBOMResults = JSON.parse(rawData);
+            }
+        }
+
+        function setView(view, btn) {
+            window.currentView = view;
+            reloadData();
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            const container = document.getElementById('drawing-container');
+            if (!window.lastBOMResults) {
+                container.innerHTML = "<h3 style='text-align:center; padding-top:50px;'>No BOM Data. Calculate First.</h3>";
+                return;
+            }
+
+            let svgString = "";
+            try {
+                if (view === 'top' && typeof DrawSolarLayout !== 'undefined') svgString = DrawSolarLayout.draw();
+                else if (view === 'structure' && typeof DrawStructuralTop !== 'undefined') svgString = DrawStructuralTop.draw();
+                else if (view === 'dims' && typeof DrawRafterPurlin !== 'undefined') svgString = DrawRafterPurlin.draw();
+                else if (view === 'gaps' && typeof DrawColumnGap !== 'undefined') svgString = DrawColumnGap.draw();
+                else if (view === 'side' && typeof SideProfile !== 'undefined') svgString = SideProfile.draw();
+
+                if (svgString) {
+                    container.innerHTML = svgString; // 1. Draw the SVG
+
+                    // --- CRITICAL FIX: Enable clicks for both Top and Structure views ---
+                    if (view === 'top' || view === 'structure') {
+                        enablePanelEditing();
+                    }
+                    // ------------------------------------------------------------------
+
+                    const svgElement = container.querySelector('svg');
+                    if (svgElement && window.svgPanZoom) {
+                        if (panZoomInstance) panZoomInstance.destroy();
+                        if (!svgElement.id) svgElement.id = "current-svg";
+                        panZoomInstance = svgPanZoom(svgElement, {
+                            zoomEnabled: true, controlIconsEnabled: true, fit: true, center: true
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    </script>
+
+    <script>
+        // 1. Initialize Global Memory for Air Pockets
+        // We attach it to 'window' so other files can see it
+        if (!window.solarAirPockets) {
+            window.solarAirPockets = new Set();
+        }
+
+        function enablePanelEditing() {
+            const panels = document.querySelectorAll('.clickable-panel');
+
+            panels.forEach(panel => {
+                // Save original color
+                const originalFill = panel.getAttribute("fill") || panel.style.fill;
+                panel.setAttribute("data-org-fill", originalFill);
+
+                // Add Listener
+                panel.removeEventListener('click', togglePanelVisibility);
+                panel.addEventListener('click', togglePanelVisibility);
+                panel.style.cursor = "pointer";
+            });
+        }
+
+        function togglePanelVisibility(e) {
+            const panel = e.target;
+            const pID = panel.id; // Get the ID (e.g., "p-0-1")
+
+            if (window.solarAirPockets.has(pID)) {
+                // --- IT WAS HIDDEN, NOW RESTORE IT ---
+                window.solarAirPockets.delete(pID); // Remove from memory
+
+                panel.style.opacity = "1";
+                const savedColor = panel.getAttribute("data-org-fill");
+                panel.setAttribute("fill", savedColor);
+                panel.style.fill = savedColor;
+            } else {
+                // --- HIDE IT (Create Air Pocket) ---
+                window.solarAirPockets.add(pID); // Add to memory
+
+                panel.style.opacity = "0.1";
+                panel.setAttribute("fill", "#cccccc");
+                panel.style.fill = "#cccccc";
+            }
+
+            console.log("Current Air Pockets:", Array.from(window.solarAirPockets));
+        }
+    </script>
+
+
+
+
+    <!-- end -->
+
+
+
+
+
+
+
+
 
 </body>
 

@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../../store/authStore";
-import { loginApi } from "../../api/authApi";
+import { fetchSingleUserPlanApi, loginApi } from "../../api/authApi";
 import { useNavigate } from "react-router-dom";
 
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import toast from "react-hot-toast";
 
 const loginSchema = z.object({
   email: z
@@ -16,9 +17,8 @@ const loginSchema = z.object({
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || /^\d{10,15}$/.test(val),
       "Enter a valid email address",
     ),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(4, "Password must be at least 6 characters"),
 });
-
 
 export default function Login() {
   const login = useAuthStore((state) => state.login);
@@ -36,7 +36,6 @@ export default function Login() {
     mode: "onChange", // validate while typing
   });
 
-
   const onSubmit = async (data) => {
     try {
       setServerError(""); // clear old errors
@@ -52,9 +51,13 @@ export default function Login() {
         timeout,
       ]);
 
-     
       // Save user and token in your store
       login(res.data.user, res.data.token);
+
+      // Fetch assigned plan
+      const planRes = await fetchSingleUserPlanApi(res.data.user.id);
+      useAuthStore.getState().setPlan(planRes.data.data);
+      toast.success('Signin Successfully!')
 
       // Navigate based on role
       if (res.data.user.role === "admin") {

@@ -3,15 +3,36 @@ import Layout from "./Pages/Layout";
 import Home from "./Pages/Home";
 import Calculator from "./Pages/Calculator";
 import Module2 from "./Pages/Module2";
-import AdminLayout from "./Pages/AdminLayout";
+
 import AdminRoutes from "./components/admin/AdminRoutes";
 import Login from "./components/main/Login";
-import ProtectedRoute from "./components/shared/ProtectedRoute";
 import RedirectIfLoggedIn from "./components/shared/RedirectIfLoggedIn";
 import PricingPage from "./Pages/PricingPage";
-import PremiumRoute from "./components/shared/PremiumRoute";
+
+import AdminProtectedRoute from "./components/admin/AdminProtectedRoute";
+import AccessRoute from "./components/shared/AccessRoute";
+import { useAuthStore } from "./store/authStore";
+import { fetchSingleUserPlanApi } from "./api/authApi";
+import { useEffect } from "react";
 
 const App = () => {
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+  const setPlan = useAuthStore((state) => state.setPlan);
+
+  useEffect(() => {
+    const loadPlan = async () => {
+      try {
+        if (user && token) {
+          const res = await fetchSingleUserPlanApi(user.id);
+          setPlan(res.data.data);
+        }
+      } catch (err) {
+        console.log("Failed to fetch plan", err);
+      }
+    };
+    loadPlan();
+  }, [user, token, setPlan]);
   return (
     <BrowserRouter>
       <Routes>
@@ -22,27 +43,26 @@ const App = () => {
           <Route
             path="/t1"
             element={
-              <PremiumRoute module="t1">
+              <AccessRoute module="t1">
                 <Calculator page="BOMCalc" />
-              </PremiumRoute>
+              </AccessRoute>
+            }
+          />
+          <Route
+            path="/t2"
+            element={
+              <AccessRoute module="t2">
+                <Module2 page="index" />
+              </AccessRoute>
             }
           />
 
           <Route
             path="/drawing"
             element={
-              <ProtectedRoute>
+              <AccessRoute module="t1">
                 <Calculator page="Drawing" />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/t2"
-            element={
-              <PremiumRoute module="t2">
-                <Module2 page="index" />
-              </PremiumRoute>
+              </AccessRoute>
             }
           />
 
@@ -57,7 +77,15 @@ const App = () => {
         </Route>
 
         {/* Admin Layout */}
-        <Route path="/admin/*" element={<AdminRoutes />} />
+        {/* ✅ PROTECTED ADMIN ROUTES */}
+        <Route
+          path="/admin/*"
+          element={
+            <AdminProtectedRoute>
+              <AdminRoutes />
+            </AdminProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

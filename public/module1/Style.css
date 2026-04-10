@@ -1,257 +1,346 @@
 /* --- GLOBAL RESET --- */
-*, *::before, *::after {
-    box-sizing: border-box;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 :root {
-    --primary-color: #2c3e50;    /* Dark Blue Text */
-    --accent-color: #3498db;     /* Modern Blue for Buttons/Highlights */
-    --bg-color: #f4f7f6;         /* Light Gray Page Background */
-    --card-bg: #ffffff;          /* White Card Background */
-    --border-radius: 8px;
-    --shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* Soft Modern Shadow */
+  --primary-color: #2c3e50; /* Dark Blue Text */
+  --accent-color: #3498db; /* Modern Blue for Buttons/Highlights */
+  --bg-color: #f4f7f6; /* Light Gray Page Background */
+  --card-bg: #ffffff; /* White Card Background */
+  --border-radius: 8px;
+  --shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* Soft Modern Shadow */
 }
 
 body {
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--bg-color);
-    color: #333;
-    margin: 0;
-    padding: 20px;
-    line-height: 1.5;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: #333;
+  margin: 0;
+  padding: 20px;
+  line-height: 1.5;
 }
+ 
 
-/* --- MAIN LAYOUT (The Fix) --- */
 .container {
-    max-width: 1250px;           /* Perfect width for desktop */
-    margin: 0 auto;
-    display: grid;
-    /* 65% Left (Inputs) | 35% Right (Results) */
-    grid-template-columns: 2fr 1.1fr; 
-    gap: 25px;
-    align-items: start;          /* Critical for Sticky Sidebar */
-}
+  margin: 0 auto;
+  display: grid;
 
+  /* Inputs | Drawings | Results */
+  grid-template-columns: 1.2fr 2fr 0.8fr;
+
+  gap: 20px;
+  align-items: start;
+}
 /* Forces Title to be Full Width */
 .full-width {
-    grid-column: 1 / -1;
-    margin-bottom: 10px;
+  grid-column: 1 / -1;
+  margin-bottom: 10px;
 }
 
 /* --- CARD STYLING --- */
 .card {
-    background: var(--card-bg);
-    padding: 30px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    display: block;              /* CRITICAL: Prevents horizontal stacking issue */
-    min-width: 0;                /* Prevents layout breaking */
+  background: var(--card-bg);
+  padding: 30px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  display: block; /* CRITICAL: Prevents horizontal stacking issue */
+  min-width: 0; /* Prevents layout breaking */
 }
 
 /* --- STICKY SIDEBAR (The "Better UI" Feature) --- */
 /* This makes the Right Panel stick to the screen while you scroll inputs */
 .card:last-child {
-    position: sticky;
-    top: 20px;
-    border: 1px solid #e1e8ed;   /* Subtle border for distinction */
+  position: sticky;
+  top: 20px;
+  border: 1px solid #e1e8ed; /* Subtle border for distinction */
 }
 
 /* --- TYPOGRAPHY --- */
-h1 { color: var(--primary-color); margin: 0 0 5px 0; }
-p.subtitle { margin: 0 0 25px 0; color: #7f8c8d; }
-
-/* Modern Section Headers */
-h3 { 
-    font-size: 1.1em; 
-    color: var(--primary-color);
-    background-color: #f8f9fa;
-    padding: 10px 15px;
-    border-left: 4px solid var(--accent-color); /* Blue accent bar */
-    border-radius: 0 4px 4px 0;
-    margin: 25px 0 15px 0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 700;
+h1 {
+  color: var(--primary-color);
+  margin: 0 0 5px 0;
+}
+p.subtitle {
+  margin: 0 0 25px 0;
+  color: #7f8c8d;
 }
 
-h2 { margin-top: 0; color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 10px;}
+/* Modern Section Headers */
+h3 {
+  font-size: 1.1em;
+  color: var(--primary-color);
+  background-color: #f8f9fa;
+  padding: 10px 15px;
+  border-left: 4px solid var(--accent-color); /* Blue accent bar */
+  border-radius: 0 4px 4px 0;
+  margin: 25px 0 15px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
+
+h2 {
+  margin-top: 0;
+  color: var(--primary-color);
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
 
 /* --- INPUTS --- */
-.input-wrapper { margin-bottom: 15px; }
-.input-wrapper label { 
-    display: block; 
-    font-size: 0.85em; 
-    font-weight: 600; 
-    margin-bottom: 6px; 
-    color: #555; 
+.input-wrapper {
+  margin-bottom: 15px;
+}
+.input-wrapper label {
+  display: block;
+  font-size: 0.85em;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #555;
 }
 
 .input-group {
-    display: flex; 
-    border: 1px solid #ced6e0; 
-    border-radius: 6px; 
-    overflow: hidden; 
-    background: #fff;
-    transition: all 0.2s ease;
+  display: flex;
+  border: 1px solid #ced6e0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+  transition: all 0.2s ease;
 }
 
 /* Glow effect when clicking input */
-.input-group:focus-within { 
-    border-color: var(--accent-color); 
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+.input-group:focus-within {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
-.input-group input { 
-    flex: 1; 
-    border: none; 
-    padding: 12px; 
-    font-size: 1em; 
-    min-width: 0; 
-    outline: none;
+.input-group input {
+  flex: 1;
+  border: none;
+  padding: 12px;
+  font-size: 1em;
+  min-width: 0;
+  outline: none;
 }
 
-.input-group select { 
-    border: none; 
-    background-color: #f1f2f6; 
-    border-left: 1px solid #ced6e0; 
-    padding: 0 15px; 
-    font-size: 0.9em; 
-    color: #444; 
-    cursor: pointer; 
-    outline: none; 
-    font-weight: 500;
+.input-group select {
+  border: none;
+  background-color: #f1f2f6;
+  border-left: 1px solid #ced6e0;
+  padding: 0 15px;
+  font-size: 0.9em;
+  color: #444;
+  cursor: pointer;
+  outline: none;
+  font-weight: 500;
 }
 
 /* Grid for Input Fields (Responsive) */
-.section-grid { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-    gap: 15px; 
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 15px;
 }
 
-.hidden { display: none; }
+.hidden {
+  display: none;
+}
 
 /* --- RESULTS SECTION --- */
-.result-header { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 20px; 
-    background: #eaf2f8; 
-    padding: 15px; 
-    border-radius: 6px; 
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  background: #eaf2f8;
+  padding: 15px;
+  border-radius: 6px;
 }
 
-.result-box { 
-    background: #fff; 
-    padding: 12px; 
-    border-bottom: 1px solid #eee; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
+.result-box {
+  background: #fff;
+  padding: 3px 1px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.result-value { font-weight: bold; color: #2c3e50; font-size: 1.1em; }
+.result-label {
+  font-weight: 600;
+  font-size: 0.8em;
+  color: #2c3e50;
+}
+.result-value {
+  font-weight: bold;
+  color: #2c3e50;
+  font-size: 0.9em;
+}
 
 /* --- BUTTONS --- */
-.button-group { display: flex; gap: 10px; margin-top: 30px; }
-
-button { cursor: pointer; transition: transform 0.1s; }
-button:active { transform: scale(0.98); }
-
-button.calculate-btn { 
-    background-color: #345B82; 
-    color: white; border: none; 
-    padding: 15px; 
-    border-radius: 6px; 
-    font-size: 1.1em; 
-    font-weight: bold; 
-    flex: 2; 
-    box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 30px;
 }
-button.calculate-btn:hover { background-color: #2980b9; }
+
+button {
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+button:active {
+  transform: scale(0.98);
+}
+
+button.calculate-btn {
+  background-color: #345b82;
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 6px;
+  font-size: 1.1em;
+  font-weight: bold;
+  flex: 2;
+  box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
+}
+button.calculate-btn:hover {
+  background-color: #2980b9;
+}
 
 button.clear-btn {
-    background-color: #95a5a6; 
-    color: white; 
-    border: none;
-    padding: 15px; 
-    border-radius: 6px; 
-    font-size: 1.1em; 
-    font-weight: bold; 
-    flex: 1;
+  background-color: #95a5a6;
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 6px;
+  font-size: 1.1em;
+  font-weight: bold;
+  flex: 1;
 }
-button.clear-btn:hover { background-color: #7f8c8d; }
+button.clear-btn:hover {
+  background-color: #7f8c8d;
+}
 
 /* --- EXPORT SECTION --- */
-.export-section { margin-top: 25px; padding-top: 20px; border-top: 2px dashed #ddd; }
-.export-controls { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+.export-section {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 2px dashed #ddd;
+}
+.export-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
 
 /* --- TABLE --- */
-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
-th, td { border: 1px solid #eee; padding: 10px; text-align: center; }
-th { background-color: #f8f9fa; color: #555; font-weight: 600; }
-tr:nth-child(even) { background-color: #fcfcfc; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 0.9em;
+}
+th,
+td {
+  border: 1px solid #eee;
+  padding: 10px;
+  text-align: center;
+}
+th {
+  background-color: #f8f9fa;
+  color: #555;
+  font-weight: 600;
+}
+tr:nth-child(even) {
+  background-color: #fcfcfc;
+}
 
 /* --- MOBILE RESPONSIVE --- */
 @media (max-width: 900px) {
-    .container { grid-template-columns: 1fr; }
-    .card:last-child { position: static; } /* Disable sticky on mobile */
+  .container {
+    grid-template-columns: 1fr;
+  }
+  .card:last-child {
+    position: static;
+  } /* Disable sticky on mobile */
 }
-
-
 
 /* --- NEW LAYOUT FIXES --- */
 
 /* 1. Strict 2-Column Grid (Fixes Cantilever Alignment) */
 .grid-2-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Exact 50% split */
-    gap: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Exact 50% split */
+  gap: 20px;
 }
 
 /* 2. Compact 3-Column Grid (Fixes Wattage Overflow) */
 .grid-3-col-compact {
-    display: grid;
-    /* 'minmax(0, 1fr)' prevents the box from blowing out of the container */
-    grid-template-columns: repeat(3, minmax(0, 1fr)); 
-    gap: 10px;
-    margin-top: 10px;
+  display: grid;
+  /* 'minmax(0, 1fr)' prevents the box from blowing out of the container */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
 }
 
 /* 3. Reduce Input Box Widths (User Request: "Need at least half of it") */
 /* This limits how wide an input can stretch, making them look cleaner */
 .input-wrapper {
-    max-width: 95%; /* Prevents edge-to-edge stretching */
+  max-width: 95%; /* Prevents edge-to-edge stretching */
 }
 
 /* On mobile, we still want full width */
 @media (max-width: 768px) {
-    .grid-2-col, .grid-3-col-compact {
-        grid-template-columns: 1fr; /* Stack vertically on phones */
-    }
-    .input-wrapper { max-width: 100%; }
+  .grid-2-col,
+  .grid-3-col-compact {
+    grid-template-columns: 1fr; /* Stack vertically on phones */
+  }
+  .input-wrapper {
+    max-width: 100%;
+  }
 }
-
 
 /* Help Button Styling */
 .help-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    background: #444;
-    color: #fff;
-    border-radius: 50%;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: help;
-    margin-left: 10px;
-    vertical-align: middle;
-    transition: background 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: #444;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: help;
+  margin-left: 10px;
+  vertical-align: middle;
+  transition: background 0.3s ease;
 }
 
 .help-btn:hover {
-    background: #ffc107; /* Matches your yellow unit boxes */
-    color: #333;
+  background: #ffc107; /* Matches your yellow unit boxes */
+  color: #333;
+}
+
+/* drawing css */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #fff;
+  padding-left: 8px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+}
+.nav-item .nav-btn {
+  border: none; /* Remove border from button since wrapper has it */
+  margin: 0;
+}
+.export-check {
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
 }

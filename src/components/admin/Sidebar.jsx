@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Users } from 'lucide-react';
+import { CreditCard, Home, Receipt, Users } from 'lucide-react';
 
 const Sidebar = () => {
   return (
@@ -12,6 +12,12 @@ const Sidebar = () => {
         </Link>
         <Link to="/admin/users" className="flex items-center gap-3 p-3 text-gray-700 hover:bg-blue-50 rounded-lg">
           <Users size={20} /> <span className="font-medium">Users</span>
+        </Link>
+         <Link to="/admin/plans" className="flex items-center gap-3 p-3 text-gray-700 hover:bg-blue-50 rounded-lg">
+          <CreditCard size={20} /> <span className="font-medium">Plans</span>
+        </Link>
+         <Link to="/admin/invoices" className="flex items-center gap-3 p-3 text-gray-700 hover:bg-blue-50 rounded-lg">
+           <Receipt size={20} /> <span className="font-medium">Invoices</span>
         </Link>
       </nav>
     </div>

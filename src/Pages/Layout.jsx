@@ -16,9 +16,9 @@ export default function Layout() {
       </main>
 
      {/* Footer */}
-      <footer>
+      {/* <footer>
         <Footer/>
-      </footer>
+      </footer> */}
     </div>
   );
 }

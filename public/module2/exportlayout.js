@@ -2,7 +2,7 @@
 // PDF EXPORT ENGINE (Phase 3: 1-Pager Final)
 // ===============================================
 
-function exportToPDF() {
+async function exportToPDF() {
     try {
         const { jsPDF } = window.jspdf;
         // A4 Landscape format (297mm x 210mm)
